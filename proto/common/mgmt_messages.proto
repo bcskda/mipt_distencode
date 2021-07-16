@@ -1,0 +1,13 @@
+syntax = "proto2";
+
+package mipt_distencode;
+
+enum WorkerState {
+    ACTIVE = 0;
+    STOPPING = 1;
+}
+
+message WorkerSelfAnnouncement {
+    optional string hostname = 1;
+    optional WorkerState newState = 2;
+}

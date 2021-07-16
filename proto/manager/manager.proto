@@ -1,0 +1,9 @@
+syntax = "proto2";
+
+package mipt_distencode;
+
+import "common/mgmt_messages.proto";
+
+service Manager {
+    rpc WorkerAnnounce(WorkerSelfAnnouncement) returns (WorkerSelfAnnouncement) {}
+}
