@@ -7,6 +7,8 @@ from mipt_distencode.manager import manager_pb2_grpc
 
 
 class ManagerServicer(manager_pb2_grpc.ManagerServicer):
+    ALLOWED_SECURITY_LEVEL = b'TSI_PRIVACY_AND_INTEGRITY'
+
     def __init__(self):
         super().__init__()
         self.workers = set()
@@ -14,6 +16,7 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer):
         self.logger.setLevel(logging.DEBUG)
 
     def WorkerAnnounce(self, announcement, context):
+        self.check_security_level(context)
         if announcement.newState == WorkerState.ACTIVE:
             return self.add_worker(announcement, context)
         elif announcement.newState == WorkerState.STOPPING:
@@ -49,3 +52,10 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer):
             context.set_code(grpc.StatusCode.NOT_FOUND)
             context.set_details(message)
             raise ValueError(message)
+
+    def check_security_level(self, context):
+        auth_ctx = context.auth_context()
+        if auth_ctx['security_level'] != [self.ALLOWED_SECURITY_LEVEL]:
+            self.logger.error('Cannot proceed without peer identification')
+            context.abort(
+                grpc.StatusCode.UNAUTHENTICATED, 'Insufficient security_level')
