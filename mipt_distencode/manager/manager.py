@@ -23,18 +23,15 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer):
             return self.remove_worker(announcement, context)
         else:
             message = f'Unknown WorkerState: {announcement.newState}'
-            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-            context.set_details(message)
-            raise ValueError(message)
+            self.logger.error(message)
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, message)
 
     def add_worker(self, announcement, context):
         worker = announcement.hostname
         if worker in self.workers:
             message = f'Duplicate worker: {worker}'
             self.logger.info(message)
-            context.set_code(grpc.StatusCode.ALREADY_EXISTS)
-            context.set_details(message)
-            raise ValueError(message)
+            context.abort(grpc.StatusCode.ALREADY_EXISTS, message)
         else:
             self.workers.add(worker)
             self.logger.info('Registered worker: %s', worker)
@@ -49,9 +46,7 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer):
         else:
             message = f'Worker not found: {worker}'
             self.logger.warning(message)
-            context.set_code(grpc.StatusCode.NOT_FOUND)
-            context.set_details(message)
-            raise ValueError(message)
+            context.abort(grpc.StatusCode.NOT_FOUND, message)
 
     def check_security_level(self, context):
         auth_ctx = context.auth_context()
