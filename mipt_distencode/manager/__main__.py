@@ -4,12 +4,13 @@ import sys
 from google.protobuf.text_format import MessageToString
 
 from mipt_distencode.manager.server import ManagerServer
+from mipt_distencode.config import Config
 from mipt_distencode.manager.client import make_client
 from mipt_distencode.mgmt_messages_pb2 import WorkerState, WorkerSelfAnnouncement
 
 
 def server_main():
-    manager_server = ManagerServer()
+    manager_server = ManagerServer(f'{Config.identity}:50052', secure=True)
     manager_server.start()
     try:
         manager_server.wait_for_termination()
