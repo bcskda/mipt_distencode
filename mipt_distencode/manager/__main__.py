@@ -3,13 +3,14 @@ import sys
 
 from google.protobuf.text_format import MessageToString
 
-from mipt_distencode.manager.server import ManagerServer
 from mipt_distencode.config import Config
 from mipt_distencode.manager.client import make_client
+from mipt_distencode.manager.server import ManagerServer
 from mipt_distencode.mgmt_messages_pb2 import WorkerState, WorkerSelfAnnouncement
+from mipt_distencode.pb_common import make_channel
 
 
-def server_main():
+def server_main(argv):
     manager_server = ManagerServer(f'{Config.identity}:50052', secure=True)
     manager_server.start()
     try:
@@ -18,8 +19,10 @@ def server_main():
         logging.info('Stopped by KeyboardInterrupt')
 
 
-def client_main():
-    client = make_client()
+def client_main(argv):
+    peer = argv[0]
+    channel = make_channel(f'{peer}:50052', secure=True)
+    client = make_client(channel)
     while True:
         try:
             newState, hostname = input().split()
@@ -40,14 +43,14 @@ def main():
         sys.exit(1)
     if sys.argv[1] == 'server':
         logging.info('Running server')
-        server_main()
+        server_main(sys.argv[2:])
     elif sys.argv[1] == 'client':
         logging.info('Running client')
-        client_main()
+        client_main(sys.argv[2:])
     else:
         raise ValueError(f'Unknown operation mode: {sys.argv[1]}')
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
     main()
