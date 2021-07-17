@@ -1,18 +1,12 @@
 import grpc
 
 from mipt_distencode.manager.manager_pb2_grpc import ManagerStub
+from mipt_distencode.pb_common import make_channel
 
 
-DEFAULT_ENDPOINT = '127.0.0.1:50051'
-
-
-def make_client(endpoint=None, channel=None, secure=False) -> ManagerStub:
-    if endpoint and channel:
-        raise ValueError('Specify either endpoint or channel')
-    if not endpoint:
-        endpoint = DEFAULT_ENDPOINT
-    if not channel:
-        if secure:
-            raise ValueError('ALTS not supported yet')
-        channel = grpc.insecure_channel(endpoint)
+def make_client(channel, **kwargs) -> ManagerStub:
+    if channel and kwargs:
+        raise ValueError('Specify either channel or construction kwargs')
+    if channel is None:
+        channel = make_channel(**kwargs)
     return ManagerStub(channel)

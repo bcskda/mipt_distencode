@@ -4,16 +4,15 @@ import grpc
 
 from mipt_distencode.manager.manager_pb2_grpc import add_ManagerServicer_to_server
 from mipt_distencode.manager.manager import ManagerServicer
+from mipt_distencode.pb_common import add_endpoint_to_server
 
 
 class ManagerServer:
-    def __init__(self, endpoint='127.0.0.1:50051', secure=False):
+    def __init__(self, endpoint, secure=False):
         self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=2))
         add_ManagerServicer_to_server(
             ManagerServicer(), self.server)
-        if secure:
-            raise ValueError('ALTS not supported yet')
-        self.server.add_insecure_port(endpoint)
+        add_endpoint_to_server(self.server, endpoint, secure)
 
     def start(self):
         self.server.start()
