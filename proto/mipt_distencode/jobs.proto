@@ -1,0 +1,20 @@
+syntax = "proto2";
+
+package mipt_distencode;
+
+message JobId {
+    optional int32 id = 1;
+}
+
+message MLTJob {
+    optional JobId id = 1;
+    optional string projectPath = 2;
+    optional string encodingPresetName = 3;
+}
+
+message JobResult {
+    optional JobId id = 1;
+    optional bool success = 2;
+    optional bytes error = 3;
+    optional bytes log = 4;
+}
