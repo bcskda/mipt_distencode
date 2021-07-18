@@ -55,3 +55,15 @@ def add_endpoint_to_server(server, endpoint, secure=False, creds=None):
         server.add_secure_port(endpoint, creds)
     else:
         server.add_insecure_port(endpoint)
+
+
+class PeerIdentityMixin:
+    ALLOWED_SECURITY_LEVEL = [b'TSI_PRIVACY_AND_INTEGRITY']
+
+    def identify_peer(self, pb_context) -> str:
+        auth_ctx = pb_context.auth_context()
+        if auth_ctx['security_level'] != self.ALLOWED_SECURITY_LEVEL:
+            self.logger.error('Cannot proceed without peer identification')
+            context.abort(
+                grpc.StatusCode.UNAUTHENTICATED, 'Insufficient security_level')
+        return auth_ctx['x509_common_name'][0].decode()

@@ -4,11 +4,10 @@ import grpc
 
 from mipt_distencode.mgmt_messages_pb2 import WorkerSelfAnnouncement, WorkerState
 from mipt_distencode.manager import manager_pb2_grpc
+from mipt_distencode.pb_common import PeerIdentityMixin
 
 
-class ManagerServicer(manager_pb2_grpc.ManagerServicer):
-    ALLOWED_SECURITY_LEVEL = b'TSI_PRIVACY_AND_INTEGRITY'
-
+class ManagerServicer(manager_pb2_grpc.ManagerServicer, PeerIdentityMixin):
     def __init__(self):
         super().__init__()
         self.workers = set()
@@ -16,7 +15,12 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer):
         self.logger.setLevel(logging.DEBUG)
 
     def WorkerAnnounce(self, announcement, context):
-        self.check_security_level(context)
+        peer_id = self.identify_peer(context)
+        if peer_id != announcement.hostname:
+            message = 'Peer {0} identified as {1} is not {2}'.format(
+                context.peer(), peer_id, announcement.hostname)
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, message)
+
         if announcement.newState == WorkerState.ACTIVE:
             return self.add_worker(announcement, context)
         elif announcement.newState == WorkerState.STOPPING:
@@ -48,9 +52,3 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer):
             self.logger.warning(message)
             context.abort(grpc.StatusCode.NOT_FOUND, message)
 
-    def check_security_level(self, context):
-        auth_ctx = context.auth_context()
-        if auth_ctx['security_level'] != [self.ALLOWED_SECURITY_LEVEL]:
-            self.logger.error('Cannot proceed without peer identification')
-            context.abort(
-                grpc.StatusCode.UNAUTHENTICATED, 'Insufficient security_level')
