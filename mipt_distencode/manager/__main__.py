@@ -6,6 +6,7 @@ from google.protobuf.text_format import MessageToString
 from mipt_distencode.config import Config
 from mipt_distencode.manager.client import make_client
 from mipt_distencode.manager.server import ManagerServer
+from mipt_distencode.jobs_pb2 import MLTJob
 from mipt_distencode.mgmt_messages_pb2 import WorkerState, WorkerSelfAnnouncement
 from mipt_distencode.pb_common import make_channel
 
@@ -25,11 +26,22 @@ def client_main(argv):
     client = make_client(channel)
     while True:
         try:
-            newState, hostname = input().split()
-            newState = WorkerState.Value(newState)
-            announcement = WorkerSelfAnnouncement(
-                newState=newState, hostname=hostname)
-            response = client.WorkerAnnounce(announcement)
+            command, args = input().split(maxsplit=1)
+            if command == 'WorkerSelfAnnouncement':
+                newState, hostname = args.split()
+                newState = WorkerState.Value(newState)
+                announcement = WorkerSelfAnnouncement(
+                    newState=newState, hostname=hostname)
+                response = client.WorkerAnnounce(announcement)
+            elif command == 'PostMLTJob':
+                projectPath, encodingPresetName = args.split()
+                job = MLTJob(
+                    projectPath=projectPath,
+                    encodingPresetName=encodingPresetName)
+                response = client.PostMLTJob(job)
+            else:
+                logging.warning('Unknown command: %s', command)
+                continue
             logging.info(
                 'Response: %s',
                 MessageToString(response, as_one_line=True))
