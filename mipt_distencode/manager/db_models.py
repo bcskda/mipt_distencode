@@ -101,7 +101,7 @@ class MLTJobHandle(Base):
     def lookup_from_proto(cls, proto: jobs_pb2.MLTJob,
                           session: Session) -> 'MLTJobHandle':
         return session.query(cls) \
-            .filter(cls.id == proto.id) \
+            .filter(cls.id == proto.id.id) \
             .one_or_none()
 
     def proto_job(self) -> jobs_pb2.MLTJob:
