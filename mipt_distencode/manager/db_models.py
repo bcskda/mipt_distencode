@@ -72,6 +72,15 @@ class MLTJobHandle(Base):
 
     _PROTO_ATTRS = ['projectPath', 'encodingPresetName']
 
+    def __repr__(self):
+        attrs = {
+            'id': self.id,
+            'projectPath': self.projectPath,
+            'encodingPresetName': self.encodingPresetName,
+            'state': self.state
+        }
+        return f'MLTJobHandle {repr(attrs)}'
+
     @classmethod
     def new_from_proto(cls, proto: jobs_pb2.MLTJob,
                           session: Session) -> 'MLTJobHandle':
