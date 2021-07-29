@@ -7,10 +7,6 @@ enum WorkerState {
     STOPPING = 1;
 }
 
-message WorkerIdentity {
-    optional string id = 1;
-}
-
 message WorkerSelfAnnouncement {
     optional string hostname = 1;
     optional WorkerState newState = 2;

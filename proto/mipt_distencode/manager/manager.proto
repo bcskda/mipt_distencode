@@ -11,4 +11,6 @@ service Manager {
     // Expects that job.id is not set
     // Returns the newly assigned job id
     rpc PostMLTJob(MLTJob) returns (JobId) {}
+
+    rpc PostMLTJobResult(MLTJobResult) returns (MLTJobResult) {}
 }
