@@ -1,15 +1,23 @@
 from concurrent import futures
 
 import grpc
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
+
+from mipt_distencode.manager.db_models import Base, Session
 from mipt_distencode.manager.manager_pb2_grpc import add_ManagerServicer_to_server
 from mipt_distencode.manager.manager import ManagerServicer
 from mipt_distencode.pb_common import add_endpoint_to_server
+from mipt_distencode.config import Config
 
 
 class ManagerServer:
     def __init__(self, endpoint, secure=False):
-        self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=2))
+        self.db = create_engine(Config.db)
+        Base.metadata.create_all(self.db)
+        Session.configure(bind=self.db)
+        self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
         add_ManagerServicer_to_server(
             ManagerServicer(), self.server)
         add_endpoint_to_server(self.server, endpoint, secure)
