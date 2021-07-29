@@ -1,3 +1,4 @@
+import logging
 from concurrent import futures
 
 import grpc
@@ -27,3 +28,17 @@ class ManagerServer:
 
     def wait_for_termination(self):
         self.server.wait_for_termination()
+
+
+def server_main():
+    manager_server = ManagerServer(f'{Config.identity}:50052', secure=True)
+    manager_server.start()
+    try:
+        manager_server.wait_for_termination()
+    except KeyboardInterrupt:
+        logging.info('Stopped by KeyboardInterrupt')
+
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
+    server_main()
