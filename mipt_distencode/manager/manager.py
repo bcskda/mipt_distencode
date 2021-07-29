@@ -47,6 +47,36 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer, PeerIdentityMixin):
             self.logger.info(f'Accepted job: {job_handle}')
             return jobs_pb2.JobId(id=job_handle.id)
 
+    def PostMLTJobResult(self, proto, context):
+        peer_id = self.identify_peer(context)
+        with Session() as session:
+            job_handle = MLTJobHandle.lookup_from_proto(proto, session)
+            if job_handle is None:
+                message = f'Job id={proto.id.id} not found'
+                self.logger.error(message)
+                context.abort(grpc.StatusCode.NOT_FOUND, message)
+            if job_handle.state != MLTJobState.IN_PROGRESS:
+                message = f'Job id={job_handle.id} is in invalid state {job_handle.state}'
+                self.logger.error(message)
+                context.abort(grpc.StatusCode.FAILED_PRECONDITION, message)
+            elif not proto.success:
+                job_handle.state = MLTJobState.FAILED
+                session.commit()
+                message = 'Job id={} failed, error: {}, log: {}'.format(
+                    job_handle.id, proto.error, proto.log)
+                self.logger.warning(message)
+            elif not proto.HasField('resultPath'):
+                message = f'Job id={job_handle.id}: missing field: resultPath'
+                self.logger.error(message)
+                context.abort(grpc.StatusCode.INVALID_ARGUMENT, message)
+            else:
+                job_handle.state = MLTJobState.VERIFICATION
+                session.commit()
+                self.logger.info(
+                    'Job id=%s successfully finished: error=%s, log=%s',
+                    job_handle.id, proto.error, proto.log)
+                return proto
+
     def add_worker(self, proto, context):
         with Session() as session:
             worker_record = WorkerRecord.lookup_from_proto(proto, session)

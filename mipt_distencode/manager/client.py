@@ -35,6 +35,20 @@ def client_main(argv):
             projectPath=projectPath,
             encodingPresetName=encodingPresetName)
         response = client.PostMLTJob(job)
+    elif command == 'PostMLTJobResult':
+        jobId, success, error, log, result_path = args
+        jobId = int(jobId)
+        success = bool(success)
+        error = error.encode('utf-8')
+        log = log.encode('utf-8')
+        jobResult = jobs_pb2.MLTJobResult(
+            id=jobs_pb2.JobId(id=jobId),
+            success=success,
+            error=error,
+            log=log,
+            resultPath=result_path)
+        response = client.PostMLTJobResult(jobResult)
+        assert response == jobResult
     else:
         raise ValueError('Unknown command:', command)
     print('Response:', MessageToString(response, as_one_line=True))
