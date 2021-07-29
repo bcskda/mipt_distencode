@@ -12,9 +12,10 @@ message MLTJob {
     optional string encodingPresetName = 3;
 }
 
-message JobResult {
+message MLTJobResult {
     optional JobId id = 1;
     optional bool success = 2;
     optional bytes error = 3;
     optional bytes log = 4;
+    optional string resultPath = 5;
 }
