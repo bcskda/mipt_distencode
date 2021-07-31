@@ -8,7 +8,7 @@ import "mipt_distencode/mgmt_messages.proto";
 service Worker {
     rpc GetState(WorkerIdentity) returns (WorkerSelfAnnouncement) {}
     
-    // Expects that job.id is not set
+    // Expects that job.id is set
     // Returns the same job id
-    rpc PostMLTJob(MLTJob) returns (JobId) {}
+    rpc PostMeltJob(MeltJob) returns (JobId) {}
 }

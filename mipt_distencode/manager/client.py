@@ -29,25 +29,25 @@ def client_main(argv):
         response = client.WorkerAnnounce(announcement)
         assert response.newState == newState
         assert response.hostname == hostname
-    elif command == 'PostMLTJob':
+    elif command == 'PostMeltJob':
         projectPath, encodingPresetName = args
-        job = jobs_pb2.MLTJob(
+        job = jobs_pb2.MeltJob(
             projectPath=projectPath,
             encodingPresetName=encodingPresetName)
-        response = client.PostMLTJob(job)
-    elif command == 'PostMLTJobResult':
+        response = client.PostMeltJob(job)
+    elif command == 'PostMeltJobResult':
         jobId, success, error, log, result_path = args
         jobId = int(jobId)
         success = bool(success)
         error = error.encode('utf-8')
         log = log.encode('utf-8')
-        jobResult = jobs_pb2.MLTJobResult(
+        jobResult = jobs_pb2.MeltJobResult(
             id=jobs_pb2.JobId(id=jobId),
             success=success,
             error=error,
             log=log,
             resultPath=result_path)
-        response = client.PostMLTJobResult(jobResult)
+        response = client.PostMeltJobResult(jobResult)
         assert response == jobResult
     else:
         raise ValueError('Unknown command:', command)

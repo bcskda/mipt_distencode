@@ -53,7 +53,7 @@ class WorkerRecord(Base):
             .one_or_none()
 
 
-class MLTJobState(enum.Enum):
+class MeltJobState(enum.Enum):
     ACCEPTED = 1
     IN_PROGRESS = 2
     WAITING_RETRY = 3
@@ -62,13 +62,13 @@ class MLTJobState(enum.Enum):
     FINISHED = 6
 
 
-class MLTJobHandle(Base):
-    __tablename__ = 'MLTJobHandle'
-    id = Column(Integer, Sequence('MLTJob_id_seq'),
+class MeltJobHandle(Base):
+    __tablename__ = 'MeltJobHandle'
+    id = Column(Integer, Sequence('MeltJob_id_seq'),
                         primary_key=True)
     projectPath = Column(String, nullable=False)
     encodingPresetName = Column(String, nullable=False)
-    state = Column(Enum(MLTJobState), nullable=False)
+    state = Column(Enum(MeltJobState), nullable=False)
 
     _PROTO_ATTRS = ['projectPath', 'encodingPresetName']
 
@@ -79,11 +79,11 @@ class MLTJobHandle(Base):
             'encodingPresetName': self.encodingPresetName,
             'state': self.state
         }
-        return f'MLTJobHandle {repr(attrs)}'
+        return f'MeltJobHandle {repr(attrs)}'
 
     @classmethod
-    def new_from_proto(cls, proto: jobs_pb2.MLTJob,
-                          session: Session) -> 'MLTJobHandle':
+    def new_from_proto(cls, proto: jobs_pb2.MeltJob,
+                          session: Session) -> 'MeltJobHandle':
         attr_mappers = {
             'projectPath': lambda p: p.projectPath,
             'encodingPresetName': lambda p: p.encodingPresetName
@@ -91,19 +91,19 @@ class MLTJobHandle(Base):
         new_attrs = {
             attr: mapper(proto) for attr, mapper in attr_mappers.items()
         }
-        new_attrs['state'] = MLTJobState.ACCEPTED
+        new_attrs['state'] = MeltJobState.ACCEPTED
         orm = cls(**new_attrs)
         session.add(orm)
         session.commit()
         return orm
 
     @classmethod
-    def lookup_from_proto(cls, proto: jobs_pb2.MLTJob,
-                          session: Session) -> 'MLTJobHandle':
+    def lookup_from_proto(cls, proto: jobs_pb2.MeltJob,
+                          session: Session) -> 'MeltJobHandle':
         return session.query(cls) \
             .filter(cls.id == proto.id.id) \
             .one_or_none()
 
-    def proto_job(self) -> jobs_pb2.MLTJob:
+    def proto_job(self) -> jobs_pb2.MeltJob:
         fields = { attr: getattr(self, attr) for attr in self._PROTO_ATTRS }
-        return jobs_pb2.MLTJob(**fields)
+        return jobs_pb2.MeltJob(**fields)

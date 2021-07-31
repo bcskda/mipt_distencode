@@ -6,7 +6,7 @@ import grpc
 from mipt_distencode import jobs_pb2, mgmt_messages_pb2
 from mipt_distencode.manager import manager_pb2_grpc
 from mipt_distencode.manager.db_models import (
-    MLTJobHandle, MLTJobState, Session, WorkerRecord, WorkerState
+    MeltJobHandle, MeltJobState, Session, WorkerRecord, WorkerState
 )
 from mipt_distencode.pb_common import PeerIdentityMixin
 
@@ -36,31 +36,31 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer, PeerIdentityMixin):
             self.logger.error(message)
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, message)
 
-    def PostMLTJob(self, proto, context):
+    def PostMeltJob(self, proto, context):
         peer_id = self.identify_peer(context)
         if proto.HasField('id'):
             context.abort(
                 grpc.StatusCode.INVALID_ARGUMENT, f'Id must not be provided')
         with Session() as session:
-            job_handle = MLTJobHandle.new_from_proto(proto, session)
+            job_handle = MeltJobHandle.new_from_proto(proto, session)
             worker = self._choose_worker()
             self.logger.info(f'Accepted job: {job_handle}')
             return jobs_pb2.JobId(id=job_handle.id)
 
-    def PostMLTJobResult(self, proto, context):
+    def PostMeltJobResult(self, proto, context):
         peer_id = self.identify_peer(context)
         with Session() as session:
-            job_handle = MLTJobHandle.lookup_from_proto(proto, session)
+            job_handle = MeltJobHandle.lookup_from_proto(proto, session)
             if job_handle is None:
                 message = f'Job id={proto.id.id} not found'
                 self.logger.error(message)
                 context.abort(grpc.StatusCode.NOT_FOUND, message)
-            if job_handle.state != MLTJobState.IN_PROGRESS:
+            if job_handle.state != MeltJobState.IN_PROGRESS:
                 message = f'Job id={job_handle.id} is in invalid state {job_handle.state}'
                 self.logger.error(message)
                 context.abort(grpc.StatusCode.FAILED_PRECONDITION, message)
             elif not proto.success:
-                job_handle.state = MLTJobState.FAILED
+                job_handle.state = MeltJobState.FAILED
                 session.commit()
                 message = 'Job id={} failed, error: {}, log: {}'.format(
                     job_handle.id, proto.error, proto.log)
@@ -70,7 +70,7 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer, PeerIdentityMixin):
                 self.logger.error(message)
                 context.abort(grpc.StatusCode.INVALID_ARGUMENT, message)
             else:
-                job_handle.state = MLTJobState.VERIFICATION
+                job_handle.state = MeltJobState.VERIFICATION
                 session.commit()
                 self.logger.info(
                     'Job id=%s successfully finished: error=%s, log=%s',

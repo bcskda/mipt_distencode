@@ -6,13 +6,13 @@ message JobId {
     optional int32 id = 1;
 }
 
-message MLTJob {
+message MeltJob {
     optional JobId id = 1;
     optional string projectPath = 2;
     optional string encodingPresetName = 3;
 }
 
-message MLTJobResult {
+message MeltJobResult {
     optional JobId id = 1;
     optional bool success = 2;
     optional bytes error = 3;

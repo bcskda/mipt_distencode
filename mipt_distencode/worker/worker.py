@@ -3,7 +3,7 @@ import multiprocessing
 
 import grpc
 
-from mipt_distencode.jobs_pb2 import JobId, MLTJob, JobResult
+from mipt_distencode.jobs_pb2 import JobId, MeltJob, JobResult
 from mipt_distencode.mgmt_messages_pb2 import WorkerSelfAnnouncement, WorkerState
 from mipt_distencode.pb_common import PeerIdentityMixin
 from mipt_distencode.worker import worker_pb2_grpc
@@ -25,7 +25,7 @@ class WorkerServicer(worker_pb2_grpc.WorkerServicer, PeerIdentityMixin):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
 
-    def PostMLTJob(self, job, context):
+    def PostMeltJob(self, job, context):
         peer = self.identify_peer(context)
         if self.state == WorkerState.STOPPING:
             context.abort(grpc.StatusCode.UNAVAILABLE, 'Worker is stopping')
