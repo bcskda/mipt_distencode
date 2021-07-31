@@ -10,6 +10,7 @@ message MeltJob {
     optional JobId id = 1;
     optional string projectPath = 2;
     optional string encodingPresetName = 3;
+    optional string resultPath = 4;
 }
 
 message MeltJobResult {

@@ -73,8 +73,8 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer, PeerIdentityMixin):
                 job_handle.state = MeltJobState.VERIFICATION
                 session.commit()
                 self.logger.info(
-                    'Job id=%s successfully finished: error=%s, log=%s',
-                    job_handle.id, proto.error, proto.log)
+                    'Job id=%s successfully finished: error=%s, log=%s, result=%s',
+                    job_handle.id, proto.error, proto.log, proto.resultPath)
                 return proto
 
     def add_worker(self, proto, context):

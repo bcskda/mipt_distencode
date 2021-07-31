@@ -68,15 +68,15 @@ class MeltJobHandle(Base):
                         primary_key=True)
     projectPath = Column(String, nullable=False)
     encodingPresetName = Column(String, nullable=False)
+    resultPath = Column(String, nullable=False)
     state = Column(Enum(MeltJobState), nullable=False)
-
-    _PROTO_ATTRS = ['projectPath', 'encodingPresetName']
 
     def __repr__(self):
         attrs = {
             'id': self.id,
             'projectPath': self.projectPath,
             'encodingPresetName': self.encodingPresetName,
+            'resultPath': self.resultPath,
             'state': self.state
         }
         return f'MeltJobHandle {repr(attrs)}'
@@ -86,7 +86,8 @@ class MeltJobHandle(Base):
                           session: Session) -> 'MeltJobHandle':
         attr_mappers = {
             'projectPath': lambda p: p.projectPath,
-            'encodingPresetName': lambda p: p.encodingPresetName
+            'encodingPresetName': lambda p: p.encodingPresetName,
+            'resultPath': lambda p: p.resultPath
         }
         new_attrs = {
             attr: mapper(proto) for attr, mapper in attr_mappers.items()
