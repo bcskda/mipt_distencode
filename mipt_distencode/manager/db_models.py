@@ -30,6 +30,13 @@ class WorkerRecord(Base):
     hostname = Column(String, primary_key=True)
     state = Column(Enum(WorkerState), nullable=False)
 
+    def __repr__(self):
+        attrs = {
+            'hostname': self.hostname,
+            'state': self.state
+        }
+        return f'WorkerRecord{repr(attrs)}'
+
     @classmethod
     def new_from_proto(cls, proto: mgmt_messages_pb2.WorkerSelfAnnouncement,
                            session: Session) -> 'WorkerRecord':
@@ -79,7 +86,7 @@ class MeltJobHandle(Base):
             'resultPath': self.resultPath,
             'state': self.state
         }
-        return f'MeltJobHandle {repr(attrs)}'
+        return f'MeltJobHandle{repr(attrs)}'
 
     @classmethod
     def new_from_proto(cls, proto: jobs_pb2.MeltJob,
@@ -106,5 +113,10 @@ class MeltJobHandle(Base):
             .one_or_none()
 
     def proto_job(self) -> jobs_pb2.MeltJob:
-        fields = { attr: getattr(self, attr) for attr in self._PROTO_ATTRS }
-        return jobs_pb2.MeltJob(**fields)
+        attrs = {
+            'id': jobs_pb2.JobId(id=self.id),
+            'projectPath': self.projectPath,
+            'encodingPresetName': self.encodingPresetName,
+            'resultPath': self.resultPath
+        }
+        return jobs_pb2.MeltJob(**attrs)
