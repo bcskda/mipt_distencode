@@ -9,6 +9,7 @@ from mipt_distencode.manager.db_models import (
     MeltJobHandle, MeltJobState, Session, WorkerRecord, WorkerState
 )
 from mipt_distencode.pb_common import PeerIdentityMixin
+from mipt_distencode.worker.client import make_client as make_worker_client
 
 
 class ManagerServicer(manager_pb2_grpc.ManagerServicer, PeerIdentityMixin):
@@ -44,8 +45,14 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer, PeerIdentityMixin):
         with Session() as session:
             job_handle = MeltJobHandle.new_from_proto(proto, session)
             worker = self._choose_worker()
-            self.logger.info(f'Accepted job: {job_handle}')
-            return jobs_pb2.JobId(id=job_handle.id)
+            self.logger.info(f'Accepted job: {job_handle}, chosen worker: {worker}')
+            worker_client = make_worker_client(
+                endpoint=f'{worker}:50053', secure=True)
+            accepted_id = worker_client.PostMeltJob(job_handle.proto_job())
+            assert accepted_id.id == job_handle.id
+            job_handle.state = MeltJobState.IN_PROGRESS
+            session.commit()
+            return accepted_id
 
     def PostMeltJobResult(self, proto, context):
         peer_id = self.identify_peer(context)
