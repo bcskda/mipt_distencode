@@ -30,10 +30,11 @@ def client_main(argv):
         assert response.newState == newState
         assert response.hostname == hostname
     elif command == 'PostMeltJob':
-        projectPath, encodingPresetName = args
+        projectPath, encodingPresetName, resultPath = args
         job = jobs_pb2.MeltJob(
             projectPath=projectPath,
-            encodingPresetName=encodingPresetName)
+            encodingPresetName=encodingPresetName,
+            resultPath=resultPath)
         response = client.PostMeltJob(job)
     elif command == 'PostMeltJobResult':
         jobId, success, error, log, result_path = args
