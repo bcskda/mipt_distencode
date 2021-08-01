@@ -1,5 +1,7 @@
+import json
 import logging
 import multiprocessing
+import os
 
 import grpc
 from google.protobuf.text_format import MessageToString
@@ -18,8 +20,7 @@ class WorkerServicer(worker_pb2_grpc.WorkerServicer, PeerIdentityMixin):
 
     def __init__(self):
         super().__init__()
-        self.mlt_presets = self._load_melt_presets()
-        self.process_count = 1
+        self.melt_presets = self._load_melt_presets()
         self.process_pool = multiprocessing.Pool(self.PROCESS_COUNT)
         self.state = WorkerState.ACTIVE
         self.logger = logging.getLogger(__name__)
@@ -33,25 +34,23 @@ class WorkerServicer(worker_pb2_grpc.WorkerServicer, PeerIdentityMixin):
             if not job.HasField(field):
                 context.abort(
                     grpc.StatusCode.INVALID_ARGUMENT, f'Missing field: {field}')
-        preset = self.mlt_presets.get(job.encodingPresetName)
+        preset = self.melt_presets.get(job.encodingPresetName)
         if preset is None:
             context.abort(
                 grpc.StatusCode.INVALID_ARGUMENT,
                 f'Unknown preset: {job.encodingPresetName}')
         self.logger.info(
             'Accepted job [%s] from [%s]',
-            MessageToString(job, as_one_line=true), peer)
+            MessageToString(job, as_one_line=True), peer)
         self.process_pool.apply_async(self._call_melt, args=[job, preset])
         return job.id
 
     def post_start(self):
         self._report_state(WorkerState.ACTIVE)
-        pass
 
     def pre_stop(self):
         self._report_state(WorkerState.STOPPING)
         self.state = WorkerState.STOPPING
-        pass
 
     def join(self):
         self.process_pool.close()
@@ -66,10 +65,17 @@ class WorkerServicer(worker_pb2_grpc.WorkerServicer, PeerIdentityMixin):
         self.logger.info('Reported state: %s', MessageToString(message, as_one_line=True))
 
     @staticmethod
-    def _load_melt_presets() -> 'Dict[str, Path]':
-        return {
-            'default': 'default_preset_description'
-        }
+    def _load_melt_presets() -> 'Dict[str, Dict]':
+        SUFFIX = '.json'
+        presets = dict()
+        for entry in os.listdir(Config.melt_preset_dir):
+            if not entry.endswith(SUFFIX):
+                continue
+            name = entry.rstrip(SUFFIX)
+            path = f'{Config.melt_preset_dir}/{entry}'
+            with open(path) as pfile:
+                presets[name] = json.load(pfile)
+        return presets
 
     def _call_melt(job, preset):
         logger = multiprocessing.log_to_stderr() \

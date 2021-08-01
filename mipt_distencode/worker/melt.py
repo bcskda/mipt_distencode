@@ -14,10 +14,7 @@ class MeltHelper:
         return cmdline
 
     @classmethod
-    def build_cmdline(cls, project_path, preset_path, result_path):
-        preset = dict()
-        with open(preset_path, 'r') as preset_file:
-            preset = json.load(preset_file)
+    def build_cmdline(cls, project_path, preset, result_path):
         cmdline = list()
         cmdline.append(Config.melt_path)
         cmdline.append(project_path)
