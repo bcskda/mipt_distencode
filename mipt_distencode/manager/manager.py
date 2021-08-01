@@ -19,6 +19,7 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer, PeerIdentityMixin):
         self.workers = collections.deque()
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
+        self._reset_workers()  # TODO request state from workers
 
     def WorkerAnnounce(self, announcement, context):
         peer_id = self.identify_peer(context)
@@ -100,7 +101,7 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer, PeerIdentityMixin):
         with Session() as session:
             worker_record = WorkerRecord.lookup_from_proto(proto, session)
             if worker_record is None:
-                message = f'Worker not found: {worker_record.hostname}, peer={context.peer()}'
+                message = f'Worker not found: {proto.hostname}, peer={context.peer()}'
                 self.logger.error(message)
                 context.abort(grpc.StatusCode.NOT_FOUND, message)
             host = worker_record.hostname
@@ -109,6 +110,15 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer, PeerIdentityMixin):
             self.workers.remove(host)
             self.logger.info('Successfully unregistered worker: %s', host)
         return proto
+
+    def _reset_workers(self):
+        self.logger.info('Resetting worker info at startup...')
+        with Session() as session:
+            for worker in session.query(WorkerRecord).all():
+                self.logger.warning('Found: %s', worker)
+                session.delete(worker)
+            session.commit()
+        self.logger.info('Done')
 
     def _choose_worker(self):
         chosen = self.workers.popleft()
