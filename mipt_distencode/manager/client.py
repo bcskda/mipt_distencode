@@ -9,7 +9,7 @@ from mipt_distencode import jobs_pb2, mgmt_messages_pb2
 from mipt_distencode.pb_common import make_channel
 
 
-def make_client(channel, **kwargs) -> ManagerStub:
+def make_client(channel=None, **kwargs) -> ManagerStub:
     if channel and kwargs:
         raise ValueError('Specify either channel or construction kwargs')
     if channel is None:
