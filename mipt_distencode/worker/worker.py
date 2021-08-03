@@ -24,6 +24,13 @@ class JobExecutionError(Exception):
         self.message = message
         self.stacktrace = stacktrace
 
+    @classmethod
+    def with_traceback(cls, jobId, e):
+        with io.StringIO() as string_io:
+            traceback.print_exc(file=string_io)
+            trace = string_io.getvalue()
+            return JobExecutionError(jobId, str(e), trace)
+
 
 class WorkerServicer(worker_pb2_grpc.WorkerServicer, PeerIdentityMixin):
     PROCESS_COUNT = 1
@@ -89,7 +96,6 @@ class WorkerServicer(worker_pb2_grpc.WorkerServicer, PeerIdentityMixin):
     def _report_job_error(self, e: JobExecutionError):
         emesg = f'Unhandled exception in worker thread: {e.message}'
         self.logger.exception(emesg)
-
         message = MeltJobResult(
             id=JobId(id=e.jobId),
             success=False,
@@ -128,7 +134,4 @@ class WorkerServicer(worker_pb2_grpc.WorkerServicer, PeerIdentityMixin):
             logger.info('job=%s cmdline: %s', job.id.id, cmdline)
             return job, cmdline
         except Exception as e:
-            with io.StringIO() as string_io:
-                traceback.print_exc(file=string_io)
-                trace = string_io.getvalue()
-                raise JobExecutionError(job.id.id, str(e), trace)
+            raise JobExecutionError.with_traceback(job.id.id, e)
