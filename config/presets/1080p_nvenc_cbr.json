@@ -13,8 +13,8 @@
     },
     "video": {
         "vcodec": "h264_nvenc",
-        "profile": "high",
-        "level": "high",
+        "vprofile": "high",
+        "level": "5.1",
         "temporal-aq": "1",
         "progressive": "1",
         "vb": "3M",
