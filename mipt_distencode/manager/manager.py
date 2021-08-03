@@ -73,6 +73,7 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer, PeerIdentityMixin):
                 message = 'Job id={} failed, error: {}, log: {}'.format(
                     job_handle.id, proto.error, proto.log)
                 self.logger.warning(message)
+                return proto
             elif not proto.HasField('resultPath'):
                 message = f'Job id={job_handle.id}: missing field: resultPath'
                 self.logger.error(message)
