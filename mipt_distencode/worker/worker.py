@@ -3,6 +3,7 @@ import json
 import logging
 import multiprocessing
 import os
+import subprocess
 import sys
 import traceback
 
@@ -132,6 +133,7 @@ class WorkerServicer(worker_pb2_grpc.WorkerServicer, PeerIdentityMixin):
             logger.setLevel(logging.DEBUG)
             cmdline = MeltHelper.build_cmdline(job.projectPath, preset, job.resultPath)
             logger.info('job=%s cmdline: %s', job.id.id, cmdline)
+            subprocess.check_call(cmdline)
             return job, cmdline
         except Exception as e:
             raise JobExecutionError.with_traceback(job.id.id, e)
