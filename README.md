@@ -55,7 +55,7 @@
 
 - Язык: python 3.9
 - Внутренние коммуникации: protobuf, gRPC, встроенная TLS-аутентификация
-- Обработка видео: MLT Framework (`.mlt` XML schema, `melt`)
+- Обработка видео: MLT Framework (`.mlt` XML schema, `melt`, `libavcodec`)
 - Состояние координатора: sqlite БД через SQLAlchemy
 
 #### Платформы
