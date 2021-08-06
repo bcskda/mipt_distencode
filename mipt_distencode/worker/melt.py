@@ -7,6 +7,7 @@ class MeltHelper:
     @classmethod
     def _build_consumer(cls, preset, target_path):
         cmdline = list()
+        cmdline.append('-progress')
         cmdline.extend(['-consumer', f'avformat:{target_path}'])
         for section, options in preset.items():
             for key, value in options.items():

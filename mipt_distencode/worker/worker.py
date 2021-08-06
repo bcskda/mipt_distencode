@@ -85,13 +85,17 @@ class WorkerServicer(worker_pb2_grpc.WorkerServicer, PeerIdentityMixin):
         self.logger.info('Reported state: %s', MessageToString(message, as_one_line=True))
 
     def _report_job_success(self, result):
-        job, cmdline = result
+        job, outPath, errPath, cmdline = result
+        log = '\n'.join([
+            f'cmdline: {str(cmdline)}',
+            f'stdout: {outPath}',
+            f'stderr: {errPath}'])
         message = MeltJobResult(
             id=job.id,
             success=True,
             resultPath=job.resultPath,
-            error='Dry run'.encode('utf-8'),
-            log=str(cmdline).encode('utf-8'))
+            error='OK'.encode('utf-8'),
+            log=log.encode('utf-8'))
         self._report_job_result(message)
 
     def _report_job_error(self, e: JobExecutionError):
@@ -126,6 +130,10 @@ class WorkerServicer(worker_pb2_grpc.WorkerServicer, PeerIdentityMixin):
         return presets
 
     @staticmethod
+    def _job_logs(job):
+        return f'{job.resultPath}.stdout', f'{job.resultPath}.stderr'
+
+    @staticmethod
     def _call_melt(job, preset):
         try:
             logger = multiprocessing.log_to_stderr() \
@@ -133,7 +141,11 @@ class WorkerServicer(worker_pb2_grpc.WorkerServicer, PeerIdentityMixin):
             logger.setLevel(logging.DEBUG)
             cmdline = MeltHelper.build_cmdline(job.projectPath, preset, job.resultPath)
             logger.info('job=%s cmdline: %s', job.id.id, cmdline)
-            subprocess.check_call(cmdline)
-            return job, cmdline
+            outPath, errPath = WorkerServicer._job_logs(job)
+            with open(outPath, 'w') as out:
+                with open(errPath, 'w') as err:
+                    pass
+                    # subprocess.check_call(cmdline, stdout=out, stderr=err)
+            return job, outPath, errPath, cmdline
         except Exception as e:
             raise JobExecutionError.with_traceback(job.id.id, e)
