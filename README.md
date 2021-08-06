@@ -4,7 +4,7 @@
 
 На вход принимает совместимые с MLT Framework xml-проекты
 
-Кодирует по пресетам с помощью `melt`
+Кодирует по пресетам с помощью `melt`, пресеты лежат в `config/presets`
 
 Параллельная обработка одного проекта по частям пока не планируется
 
@@ -61,3 +61,31 @@
 #### Платформы
 
 Тестировалось в пределах локалхоста на openSUSE Leap 15.2 с Python 3.9
+
+#### Про эксплуатацию
+
+Порт координатора TCP 50052, порт воркера TCP 50053
+
+Самым удобным способом развернуться выглядит: сделать на координатора и воркеров DNS-записи и скриптом репозитория самоподписанные сертификаты
+
+grpcio поддерживает IPv4/IPv6
+
+#### Попробовать
+
+```bash
+. venv/bin/activate
+. config/manager-1.env
+python -m mipt_distencode.manager.server
+```
+
+```bash
+. venv/bin/activate
+. config/worker-1.env
+python -m mipt_distencode.worker.server
+```
+
+```bash
+. venv/bin/activate
+. config/manager-1.env  # todo веб
+python -m mipt_distencode.manager.client manager-1.localdomain PostMeltJob "$HOME/Project 1.mlt" 1080p_nvenc_vbr "/media/share/Project 1.mp4"
+```
