@@ -1,11 +1,10 @@
 PROTO_SPECS = \
+  ./proto/mipt_distencode/jobs.proto \
+  ./proto/mipt_distencode/mgmt_messages.proto \
   ./proto/mipt_distencode/manager/manager.proto \
-  ./proto/mipt_distencode/mgmt_messages.proto
+  ./proto/mipt_distencode/worker/worker.proto
 
-proto: proto_manager
-	
-
-proto_manager:
+proto:
 	python -m grpc_tools.protoc \
 	  -I./proto \
 	  --python_out=. --grpc_python_out=. \

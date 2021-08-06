@@ -1,0 +1,23 @@
+{
+    "melt": {
+        "mlt_service": "avcodec"
+    },
+    "general": {
+        "format": "mp4",
+        "framerate": "30",
+        "size": "1920x1080"
+    },
+    "audio": {
+        "acodec": "aac",
+        "ab": "384k"
+    },
+    "video": {
+        "vcodec": "h264_nvenc",
+        "vprofile": "high",
+        "level": "5.1",
+        "temporal-aq": "1",
+        "progressive": "1",
+        "vq": "18",
+        "g": "150"
+    }
+}

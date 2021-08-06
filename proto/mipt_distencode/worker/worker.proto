@@ -1,0 +1,14 @@
+syntax = "proto2";
+
+package mipt_distencode;
+
+import "mipt_distencode/jobs.proto";
+import "mipt_distencode/mgmt_messages.proto";
+
+service Worker {
+    rpc GetState(WorkerIdentity) returns (WorkerSelfAnnouncement) {}
+    
+    // Expects that job.id is set
+    // Returns the same job id
+    rpc PostMeltJob(MeltJob) returns (JobId) {}
+}

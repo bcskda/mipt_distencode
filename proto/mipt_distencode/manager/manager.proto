@@ -2,8 +2,15 @@ syntax = "proto2";
 
 package mipt_distencode;
 
+import "mipt_distencode/jobs.proto";
 import "mipt_distencode/mgmt_messages.proto";
 
 service Manager {
     rpc WorkerAnnounce(WorkerSelfAnnouncement) returns (WorkerSelfAnnouncement) {}
+    
+    // Expects that job.id is not set
+    // Returns the newly assigned job id
+    rpc PostMeltJob(MeltJob) returns (JobId) {}
+
+    rpc PostMeltJobResult(MeltJobResult) returns (MeltJobResult) {}
 }
