@@ -145,7 +145,7 @@ class WorkerServicer(worker_pb2_grpc.WorkerServicer, PeerIdentityMixin):
             with open(outPath, 'w') as out:
                 with open(errPath, 'w') as err:
                     pass
-                    # subprocess.check_call(cmdline, stdout=out, stderr=err)
+                    subprocess.check_call(cmdline, stdout=out, stderr=err)
             return job, outPath, errPath, cmdline
         except Exception as e:
             raise JobExecutionError.with_traceback(job.id.id, e)
