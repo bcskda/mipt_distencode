@@ -68,10 +68,11 @@ class Pinger:
         with Session() as session:
             for hostname in removal:
                 try:
+                    jobs = MeltJobHandle.mark_retry_by_worker(hostname, session)
                     self._workers.remove(hostname)
                     session.delete(WorkerRecord.by_hostname(hostname, session))
                     session.commit()
-                    self._logger.info('Removed worker %s', hostname)
+                    self._logger.info('Removed worker %s, pending jobs: %s', hostname, jobs)
                 except Exception as e:
                     self._logger.warning('Failed to remove worker %s: %s', hostname, e)
 
@@ -125,7 +126,7 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer, PeerIdentityMixin):
                     endpoint=f'{worker}:50053', secure=True)
                 accepted_id = worker_client.PostMeltJob(job_handle.proto_job())
                 assert accepted_id.id == job_handle.id
-                job_handle.state = MeltJobState.IN_PROGRESS
+                job_handle.mark_in_progress(worker, session)
                 session.commit()
                 return accepted_id
 

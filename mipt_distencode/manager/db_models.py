@@ -81,6 +81,7 @@ class MeltJobHandle(Base):
     encodingPresetName = Column(String, nullable=False)
     resultPath = Column(String, nullable=False)
     state = Column(Enum(MeltJobState), nullable=False)
+    worker_hostname = Column(String, nullable=True)
 
     def __repr__(self):
         attrs = {
@@ -88,7 +89,8 @@ class MeltJobHandle(Base):
             'projectPath': self.projectPath,
             'encodingPresetName': self.encodingPresetName,
             'resultPath': self.resultPath,
-            'state': self.state
+            'state': self.state,
+            'worker_hostname': self.worker_hostname
         }
         return f'MeltJobHandle{repr(attrs)}'
 
@@ -115,6 +117,21 @@ class MeltJobHandle(Base):
         return session.query(cls) \
             .filter(cls.id == proto.id.id) \
             .one_or_none()
+
+    @classmethod
+    def mark_retry_by_worker(cls, hostname: str, session: Session):
+        jobs = session.query(cls) \
+            .filter(
+                cls.worker_hostname == hostname,
+                cls.state.in_({MeltJobState.ACCEPTED, MeltJobState.IN_PROGRESS}))
+        jobs = list(jobs)
+        for job in jobs:
+            job.state = MeltJobState.WAITING_RETRY
+        return jobs
+
+    def mark_in_progress(self, worker_hostname: str, session: Session):
+        self.state = MeltJobState.IN_PROGRESS
+        self.worker_hostname = worker_hostname
 
     def proto_job(self) -> jobs_pb2.MeltJob:
         attrs = {
