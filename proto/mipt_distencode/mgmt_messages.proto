@@ -15,3 +15,5 @@ message WorkerSelfAnnouncement {
     optional string hostname = 1;
     optional WorkerState newState = 2;
 }
+
+message PingMesg {}

@@ -44,6 +44,11 @@ class WorkerServicer(worker_pb2_grpc.WorkerServicer, PeerIdentityMixin):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
 
+    def Ping(self, ping, context):
+        peer = self.identify_peer(context)
+        self.logger.info('Ping from %s', peer)
+        return ping
+
     def PostMeltJob(self, job, context):
         peer = self.identify_peer(context)
         if self.state == WorkerState.STOPPING:
