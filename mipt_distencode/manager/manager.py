@@ -1,6 +1,7 @@
 import collections
 import logging
-from threading import Lock, Thread, Timer
+import time
+from threading import Lock, Thread
 
 import grpc
 
@@ -26,6 +27,55 @@ class LockHolder:
         return False
 
 
+class Pinger:
+    PING_TIMEOUT = 10
+
+    def __init__(self, workers, lock):
+        self._workers = workers
+        self._lock = lock
+        self._logger = logging.getLogger('pinger')
+        self._logger.setLevel(logging.INFO)
+        self._stopping = False
+        self._thread = Thread(target=self._loop)
+
+    def start(self):
+        self._thread.start()
+
+    def stop(self):
+        with LockHolder(self._lock):
+            self._stopping = True
+        self._thread.join()
+
+    def _loop(self):
+        while True:
+            with LockHolder(self._lock):
+                if self._stopping:
+                    break
+                removal = list(filter(self._is_dead, self._workers))
+                self._remove(removal)
+            time.sleep(self.PING_TIMEOUT)
+
+    def _is_dead(self, hostname):
+        try:
+            worker_client = make_worker_client(
+                endpoint=f'{hostname}:50053', secure=True)
+            worker_client.Ping(mgmt_messages_pb2.PingMesg())
+            return False
+        except Exception:
+            return True
+
+    def _remove(self, removal):
+        with Session() as session:
+            for hostname in removal:
+                try:
+                    self._workers.remove(hostname)
+                    session.delete(WorkerRecord.by_hostname(hostname, session))
+                    session.commit()
+                    self._logger.info('Removed worker %s', hostname)
+                except Exception as e:
+                    self._logger.warning('Failed to remove worker %s: %s', hostname, e)
+
+
 class ManagerServicer(manager_pb2_grpc.ManagerServicer, PeerIdentityMixin):
     """Not thread-safe, use only with single-threaded RPC server"""
     def __init__(self):
@@ -35,6 +85,13 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer, PeerIdentityMixin):
         self.logger.setLevel(logging.DEBUG)
         self._lock = Lock()
         self._reset_workers()  # TODO request state from workers
+        self._pinger = Pinger(self.workers, self._lock)
+
+    def post_start(self):
+        self._pinger.start()
+
+    def pre_stop(self):
+        self._pinger.stop()
 
     def WorkerAnnounce(self, announcement, context):
         with self._synced():

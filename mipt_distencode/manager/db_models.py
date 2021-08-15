@@ -53,11 +53,15 @@ class WorkerRecord(Base):
         return orm
 
     @classmethod
+    def by_hostname(cls, hostname: str, session: Session) -> 'WorkerRecord':
+        return session.query(cls) \
+            .filter(cls.hostname == hostname) \
+            .one_or_none()
+
+    @classmethod
     def lookup_from_proto(cls, proto: mgmt_messages_pb2.WorkerSelfAnnouncement,
                            session: Session) -> 'WorkerRecord':
-        return session.query(cls) \
-            .filter(cls.hostname == proto.hostname) \
-            .one_or_none()
+        return cls.by_hostname(proto.hostname, session)
 
 
 class MeltJobState(enum.Enum):
